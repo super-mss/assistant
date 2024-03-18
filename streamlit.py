@@ -8,12 +8,12 @@ import time
 #     "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
 #     "[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
 
-openai_api_key = "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"
+openai_api_key = "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"
 assistant_id = "asst_HDT4d6Jr7eoidbJXdjvmt2IH"
 client = OpenAI(api_key=openai_api_key)
 
 with st.sidebar:    
-    thread_id  = st.text_input("Thread ID", value="thread_c4yTpTidybBcW0C7qS1e1M3C")
+    thread_id  = st.text_input("Thread ID", value="thread_JLTmFqLJKdbRFbY9dlyMjjUF")
     thread_btn = st.button("Create a new Thred")
     
     if thread_btn :
@@ -70,9 +70,19 @@ if prompt := st.chat_input():
         print(run)
 
         thread_messages = client.beta.threads.messages.list(thread_id)
-        msg = thread_messages.data[0].content[0].text.value
-        st.session_state.messages.append({"role": "assistant", "content": msg})
-        st.chat_message("assistant").write(msg)
+
+        # thread_messages.data가 존재하고, 최소한 하나의 원소가 있는지 확인
+        if thread_messages.data and len(thread_messages.data) > 0:
+            data_item = thread_messages.data[0]
+    
+            # data_item.content가 존재하고, 최소한 하나의 원소가 있는지 확인
+            if data_item.content and len(data_item.content) > 0:
+                content_item = data_item.content[0]
+                # content_item.text가 존재하고, value 필드가 있는지 확인
+                if hasattr(content_item, 'text') and hasattr(content_item.text, 'value'):
+                    msg = thread_messages.data[0].content[0].text.value
+                    st.session_state.messages.append({"role": "assistant", "content": msg})
+                    st.chat_message("assistant").write(msg)
 
         
 
