@@ -8,7 +8,7 @@ import time
 #     "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
 #     "[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
 
-openai_api_key = "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"
+openai_api_key = "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"
 assistant_id = "asst_HDT4d6Jr7eoidbJXdjvmt2IH"
 client = OpenAI(api_key=openai_api_key)
 
