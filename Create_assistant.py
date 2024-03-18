@@ -1,7 +1,7 @@
 import os;
 from openai import OpenAI
 
-openai_api_key = "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"
+openai_api_key = "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"
 client = OpenAI(api_key=openai_api_key)
 
 file = "KOBIS.pdf"
