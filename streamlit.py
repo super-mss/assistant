@@ -10,7 +10,7 @@ import time
 
 openai_api_key = "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"
 assistant_id = "asst_HDT4d6Jr7eoidbJXdjvmt2IH"
-client = OpenAI(api_key=openai_api_key)
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 with st.sidebar:    
     thread_id  = st.text_input("Thread ID", value="thread_JLTmFqLJKdbRFbY9dlyMjjUF")
