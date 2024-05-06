@@ -1,94 +1,98 @@
-from openai import OpenAI
+import requests
 import streamlit as st
-import time
+from openai import OpenAI
+from openai.types.beta.assistant_stream_event import ThreadMessageDelta
+from openai.types.beta.threads.text_delta_block import TextDeltaBlock 
 
-# with st.sidebar:
-#     openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
-#     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
-#     "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
-#     "[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
+ASSISTANT_ID = "asst_por4rAgGvlqY9JAkvi5T52GN"
+VECTOR_STORE_ID = "vs_o8KtBPCyZ74hoaPcw8XQTPVP"
 
-openai_api_key = "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"
-assistant_id = "asst_HDT4d6Jr7eoidbJXdjvmt2IH"
+
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-
-with st.sidebar:    
-    thread_id  = st.text_input("Thread ID", value="thread_JLTmFqLJKdbRFbY9dlyMjjUF")
-    thread_btn = st.button("Create a new Thred")
-    
-    if thread_btn :
-        thread = client.beta.threads.create()
-        thread_id = thread.id
-
-        st.subheader(f"{thread_id}",divider="rainbow")
-        st.info("스레드가 생성되었습니다.")
+assistant = client.beta.assistants.retrieve(assistant_id=ASSISTANT_ID)
 
 
-st.title("💬 Chatbot")
-# st.caption("🚀 A streamlit chatbot powered by OpenAI LLM")
-if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+with st.sidebar:
+     st.markdown("# 백터스토어 등록된 파일")          
+     filelist_btn = st.button("조회")
 
-for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["content"])
-
-if prompt := st.chat_input():
-    if not openai_api_key:
-        st.info("Please add your OpenAI API key to continue.")
-        st.stop()
-    if not thread_id:
-        st.info("Please add your thread ID key to continue.")
-        st.stop()
-
-
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    st.chat_message("user").write(prompt)
-    
-    response = client.beta.threads.messages.create(
-        thread_id,
-        role="user",
-        content=prompt,
-    )
-    print(response)
-
-    run = client.beta.threads.runs.create(
-        thread_id = thread_id,
-        assistant_id = assistant_id
-    )
-
-    print(run)
-    run_id = run.id
-    while True :
-        run = client.beta.threads.runs.retrieve(
-            thread_id = thread_id,
-            run_id = run_id
-        )
-        if run.status == "completed": 
-            break
-        else :
-            time.sleep(2)            
-        print(run)
-
-        thread_messages = client.beta.threads.messages.list(thread_id)
-
-        # thread_messages.data가 존재하고, 최소한 하나의 원소가 있는지 확인
-        if thread_messages.data and len(thread_messages.data) > 0:
-            data_item = thread_messages.data[0]
-    
-            # data_item.content가 존재하고, 최소한 하나의 원소가 있는지 확인
-            if data_item.content and len(data_item.content) > 0:
-                content_item = data_item.content[0]
-                # content_item.text가 존재하고, value 필드가 있는지 확인
-                if hasattr(content_item, 'text') and hasattr(content_item.text, 'value'):
-                    msg = thread_messages.data[0].content[0].text.value
-                    st.session_state.messages.append({"role": "assistant", "content": msg})
-                    st.chat_message("assistant").write(msg)
-
+     if filelist_btn :         
+        all_files = list(client.beta.vector_stores.files.list(VECTOR_STORE_ID))
+        for file in all_files:    
+            url = f'https://api.openai.com/v1/files/{file.id}'
+            response = requests.get(url, headers={'Authorization': f'Bearer {st.secrets["OPENAI_API_KEY"]}'})
+            file_info = response.json()
+            st.markdown(file_info['filename'])
+        
+        st.subheader(f"",divider="rainbow")
+        st.info("파일목록이 생성되었습니다.")
         
 
-    
+     st.markdown("---")
+     st.markdown("# 파일 추가 등록")
+     uploaded_files = st.file_uploader(
+        label="Support vector store capabilities based on uploaded files.",     
+        accept_multiple_files=True,
+     )
 
-    # response = client.chat.completions.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
-    # msg = response.choices[0].message.content
-    # st.session_state.messages.append({"role": "assistant", "content": msg})
-    # st.chat_message("assistant").write(msg)
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+# 타이틀
+st.title("Demo: OpenAI Assistants API Streaming")
+
+# messages history
+for message in st.session_state.chat_history:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Textbox
+if user_query := st.chat_input("Ask me a question"):
+
+    # Create a new thread
+    if "thread_id" not in st.session_state:
+        thread = client.beta.threads.create()
+        st.session_state.thread_id = thread.id
+
+    # user_query
+    with st.chat_message("user"):
+        st.markdown(user_query)
+
+    # Store the user's query into the history
+    st.session_state.chat_history.append({"role": "user","content": user_query})
+    
+    # thread
+    client.beta.threads.messages.create(
+        thread_id=st.session_state.thread_id,
+        role="user",
+        content=user_query
+        )
+
+    # reply
+    with st.chat_message("assistant"):
+        stream = client.beta.threads.runs.create(
+            thread_id=st.session_state.thread_id,
+            assistant_id=ASSISTANT_ID,
+            stream=True
+        )
+        
+        assistant_reply_box = st.empty()
+        
+        assistant_reply = ""
+
+        # stream 
+        for event in stream:
+            # streaming events
+            # 참조 : https://platform.openai.com/docs/api-reference/assistants-streaming/events
+            
+            if isinstance(event, ThreadMessageDelta):
+                if isinstance(event.data.delta.content[0], TextDeltaBlock):
+                    # empty the container
+                    assistant_reply_box.empty()
+                    # add the new text
+                    assistant_reply += event.data.delta.content[0].text.value
+                    # display the new text
+                    assistant_reply_box.markdown(assistant_reply)
+        
+        # update chat history
+        st.session_state.chat_history.append({"role": "assistant","content": assistant_reply})
