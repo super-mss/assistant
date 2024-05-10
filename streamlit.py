@@ -30,11 +30,12 @@ with st.sidebar:
      st.markdown("---")
      uploaded_files = st.file_uploader(        
         label="Vector Stores 파일등록",     
-        accept_multiple_files=False,
+        accept_multiple_files=True,
         type=[".pdf"]
      )
-     if uploaded_files is not None:
-        try:
+     if uploaded_files:
+        try: 
+            #print(uploaded_files.getvalue())
             file_batch = client.beta.vector_stores.file_batches.upload_and_poll(
                 vector_store_id=VECTOR_STORE_ID, files=uploaded_files
             )
@@ -47,7 +48,6 @@ with st.sidebar:
                 )
         except Exception as e:
             st.error(f"처리 중 오류 발생: {e}")
-
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
