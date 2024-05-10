@@ -5,7 +5,7 @@ from openai.types.beta.assistant_stream_event import ThreadMessageDelta
 from openai.types.beta.threads.text_delta_block import TextDeltaBlock 
 
 ASSISTANT_ID = "asst_por4rAgGvlqY9JAkvi5T52GN"
-VECTOR_STORE_ID = "vs_o8KtBPCyZ74hoaPcw8XQTPVP"
+VECTOR_STORE_ID = "vs_gS5WxC9skamdxq97gKHCZnky"
 
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -27,13 +27,26 @@ with st.sidebar:
         st.subheader(f"",divider="rainbow")
         st.info("파일목록이 생성되었습니다.")
         
-
      st.markdown("---")
-     st.markdown("# 파일 추가 등록")
-     uploaded_files = st.file_uploader(
-        label="Support vector store capabilities based on uploaded files.",     
-        accept_multiple_files=True,
+     uploaded_files = st.file_uploader(        
+        label="Vector Stores 파일등록",     
+        accept_multiple_files=False,
+        type=[".pdf"]
      )
+     if uploaded_files is not None:
+        try:
+            file_batch = client.beta.vector_stores.file_batches.upload_and_poll(
+                vector_store_id=VECTOR_STORE_ID, files=uploaded_files
+            )
+            st.subheader(f"",divider="rainbow")
+            st.info(file_batch.status)
+            if(file_batch.status=="completed") :
+                client.beta.assistants.update(
+                    assistant_id=ASSISTANT_ID,
+                    tool_resources={"file_search": {"vector_store_ids": [VECTOR_STORE_ID]}},
+                )
+        except Exception as e:
+            st.error(f"처리 중 오류 발생: {e}")
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
