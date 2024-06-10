@@ -11,6 +11,23 @@ VECTOR_STORE_ID = "vs_gS5WxC9skamdxq97gKHCZnky"
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 assistant = client.beta.assistants.retrieve(assistant_id=ASSISTANT_ID)
 
+def list_vector_store_files(vector_store_id):
+    try:
+        all_files = list(client.beta.vector_stores.files.list(vector_store_id))
+        return [file['id'] for file in all_files]
+    except Exception as e:
+        st.error(f"파일 목록을 가져오는 중 오류 발생: {e}")
+        return []
+
+def get_file_info(file_id):
+    try:
+        url = f'https://api.openai.com/v1/files/{file_id}'
+        response = requests.get(url, headers={'Authorization': f'Bearer {OPENAI_API_KEY}'})
+        return response.json()
+    except Exception as e:
+        st.error(f"파일 정보를 가져오는 중 오류 발생: {e}")
+        return None
+        
 def download_file(file_id, filename):
     try:
         url = f'https://api.openai.com/v1/files/{file_id}/content'
@@ -37,13 +54,8 @@ with st.sidebar:
      filelist_btn = st.button("조회")
 
      if filelist_btn :         
-        all_files = list(client.beta.vector_stores.files.list(VECTOR_STORE_ID))
-        st.session_state.file_list = []
-        for file in all_files:    
-            url = f'https://api.openai.com/v1/files/{file.id}'
-            response = requests.get(url, headers={'Authorization': f'Bearer {st.secrets["OPENAI_API_KEY"]}'})
-            file_info = response.json()
-            st.session_state.file_list.append(file_info['filename'])
+        file_ids = list_vector_store_files(VECTOR_STORE_ID)
+        st.session_state.file_list = [get_file_info(file_id) for file_id in file_ids]
         
         st.subheader(f"",divider="rainbow")
         st.info("파일목록이 생성되었습니다.")
