@@ -14,7 +14,7 @@ assistant = client.beta.assistants.retrieve(assistant_id=ASSISTANT_ID)
 def download_file(file_id, filename):
     try:
         url = f'https://api.openai.com/v1/files/{file_id}/content'
-        response = requests.get(url, headers={'Authorization': f'Bearer {OPENAI_API_KEY}'}, stream=True)
+        response = requests.get(url, headers={'Authorization': f'Bearer {st.secrets["OPENAI_API_KEY"]}'}, stream=True)
         if response.status_code == 200:
             with open(filename, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
