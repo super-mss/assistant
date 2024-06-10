@@ -14,6 +14,9 @@ assistant = client.beta.assistants.retrieve(assistant_id=ASSISTANT_ID)
 if "file_list" not in st.session_state:
     st.session_state.file_list = []
 
+if "uploaded_files" not in st.session_state:
+    st.session_state.uploaded_files = None
+
 with st.sidebar:
      st.markdown("# 백터스토어 등록된 파일")          
      filelist_btn = st.button("조회")
@@ -41,11 +44,14 @@ with st.sidebar:
         accept_multiple_files=True,
         type=[".pdf"]
      )
-     if uploaded_files:
+     if uploaded_files and st.session_state.uploaded_files is None:
+        st.session_state.uploaded_files = uploaded_files
+         
+     if st.session_state.uploaded_files:
         try: 
             #print(uploaded_files.getvalue())
             file_batch = client.beta.vector_stores.file_batches.upload_and_poll(
-                vector_store_id=VECTOR_STORE_ID, files=uploaded_files
+                vector_store_id=VECTOR_STORE_ID, files=st.session_state.uploaded_files
             )
             st.subheader(f"",divider="rainbow")
             st.info(file_batch.status)
@@ -55,7 +61,7 @@ with st.sidebar:
                     tool_resources={"file_search": {"vector_store_ids": [VECTOR_STORE_ID]}},
                 )
                 st.success("파일 업로드 및 벡터 저장소 업데이트 완료")
-                uploaded_files = None
+                st.session_state.uploaded_files = None
         except Exception as e:
             st.error(f"처리 중 오류 발생: {e}")
 if "chat_history" not in st.session_state:
