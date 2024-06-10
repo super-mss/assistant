@@ -50,9 +50,13 @@ with st.sidebar:
           
      if st.session_state.file_list:
         st.subheader("파일 목록")
-        for filename in st.session_state.file_list:            
-            if st.button(f"{filename} 다운로드", key=file_id):
-                    download_file(file_id, filename)
+        for file_info in st.session_state.file_list: 
+             if file_info:
+                filename = file_info['filename']
+                file_id = file_info['id']
+                st.markdown(f"- {filename}")
+                if st.button(f"{filename} 다운로드", key=file_id):
+                   download_file(file_id, filename)
         
      st.markdown("---")
      uploaded_files = st.file_uploader(        
