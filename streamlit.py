@@ -11,6 +11,21 @@ VECTOR_STORE_ID = "vs_gS5WxC9skamdxq97gKHCZnky"
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 assistant = client.beta.assistants.retrieve(assistant_id=ASSISTANT_ID)
 
+def download_file(file_id, filename):
+    try:
+        url = f'https://api.openai.com/v1/files/{file_id}/content'
+        response = requests.get(url, headers={'Authorization': f'Bearer {OPENAI_API_KEY}'}, stream=True)
+        if response.status_code == 200:
+            with open(filename, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            st.success(f"{filename} 다운로드 완료")
+        else:
+            st.error(f"파일 다운로드 실패: {response.status_code}")
+    except Exception as e:
+        st.error(f"파일 다운로드 중 오류 발생: {e}")
+        
+
 if "file_list" not in st.session_state:
     st.session_state.file_list = []
 
@@ -35,8 +50,9 @@ with st.sidebar:
           
      if st.session_state.file_list:
         st.subheader("파일 목록")
-        for filename in st.session_state.file_list:
-            st.markdown(filename)
+        for filename in st.session_state.file_list:            
+            if st.button(f"{filename} 다운로드", key=file_id):
+                    download_file(file_id, filename)
         
      st.markdown("---")
      uploaded_files = st.file_uploader(        
