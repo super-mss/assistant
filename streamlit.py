@@ -45,25 +45,25 @@ with st.sidebar:
         type=[".pdf"]
      )
      if uploaded_files and st.session_state.uploaded_files is None:
-        st.session_state.uploaded_files = uploaded_files
-         
-     if st.session_state.uploaded_files:
-        try: 
-            #print(uploaded_files.getvalue())
-            file_batch = client.beta.vector_stores.file_batches.upload_and_poll(
-                vector_store_id=VECTOR_STORE_ID, files=st.session_state.uploaded_files
-            )
-            st.subheader(f"",divider="rainbow")
-            st.info(file_batch.status)
-            if(file_batch.status=="completed") :
-                client.beta.assistants.update(
-                    assistant_id=ASSISTANT_ID,
-                    tool_resources={"file_search": {"vector_store_ids": [VECTOR_STORE_ID]}},
+        st.session_state.uploaded_files = uploaded_files         
+        if st.session_state.uploaded_files:
+            try: 
+                #print(uploaded_files.getvalue())
+                file_batch = client.beta.vector_stores.file_batches.upload_and_poll(
+                    vector_store_id=VECTOR_STORE_ID, files=st.session_state.uploaded_files
                 )
-                st.success("파일 업로드 및 벡터 저장소 업데이트 완료")
+                st.subheader(f"",divider="rainbow")
+                st.info(file_batch.status)
+                if(file_batch.status=="completed") :
+                    client.beta.assistants.update(
+                        assistant_id=ASSISTANT_ID,
+                        tool_resources={"file_search": {"vector_store_ids": [VECTOR_STORE_ID]}},
+                    )
+                    st.success("파일 업로드 및 벡터 저장소 업데이트 완료")
                 st.session_state.uploaded_files = None
-        except Exception as e:
-            st.error(f"처리 중 오류 발생: {e}")
+            except Exception as e:
+                st.error(f"처리 중 오류 발생: {e}")
+            
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
