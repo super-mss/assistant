@@ -11,27 +11,10 @@ VECTOR_STORE_ID = "vs_gS5WxC9skamdxq97gKHCZnky"
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 assistant = client.beta.assistants.retrieve(assistant_id=ASSISTANT_ID)
 
-def list_vector_store_files(vector_store_id):
-    try:
-        all_files = list(client.beta.vector_stores.files.list(vector_store_id))
-        return [file['id'] for file in all_files]
-    except Exception as e:
-        st.error(f"파일 목록을 가져오는 중 오류 발생: {e}")
-        return []
-
-def get_file_info(file_id):
-    try:
-        url = f'https://api.openai.com/v1/files/{file_id}'
-        response = requests.get(url, headers={'Authorization': f'Bearer {st.secrets["OPENAI_API_KEY"]}'})
-        return response.json()
-    except Exception as e:
-        st.error(f"파일 정보를 가져오는 중 오류 발생: {e}")
-        return None
-        
 def download_file(file_id, filename):
     try:
         url = f'https://api.openai.com/v1/files/{file_id}/content'
-        response = requests.get(url, headers={'Authorization': f'Bearer {st.secrets["OPENAI_API_KEY"]}'}, stream=True)
+        response = requests.get(url, headers={'Authorization': f'Bearer {OPENAI_API_KEY}'}, stream=True)
         if response.status_code == 200:
             with open(filename, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
@@ -54,21 +37,21 @@ with st.sidebar:
      filelist_btn = st.button("조회")
 
      if filelist_btn :         
-        file_ids = list_vector_store_files(VECTOR_STORE_ID)
-        st.session_state.file_list = [get_file_info(file_id) for file_id in file_ids]
+        all_files = list(client.beta.vector_stores.files.list(VECTOR_STORE_ID))
+        st.session_state.file_list = []
+        for file in all_files:    
+            url = f'https://api.openai.com/v1/files/{file.id}'
+            response = requests.get(url, headers={'Authorization': f'Bearer {st.secrets["OPENAI_API_KEY"]}'})
+            file_info = response.json()
+            st.session_state.file_list.append(file_info['filename'])
         
         st.subheader(f"",divider="rainbow")
         st.info("파일목록이 생성되었습니다.")
           
      if st.session_state.file_list:
         st.subheader("파일 목록")
-        for file_info in st.session_state.file_list: 
-             if file_info:
-                filename = file_info['filename']
-                file_id = file_info['id']
-                st.markdown(f"- {filename}")
-                if st.button(f"{filename} 다운로드", key=file_id):
-                   download_file(file_id, filename)
+        for filename in st.session_state.file_list:            
+            st.markdown(filename)
         
      st.markdown("---")
      uploaded_files = st.file_uploader(        
