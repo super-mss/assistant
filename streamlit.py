@@ -22,7 +22,7 @@ def list_vector_store_files(vector_store_id):
 def get_file_info(file_id):
     try:
         url = f'https://api.openai.com/v1/files/{file_id}'
-        response = requests.get(url, headers={'Authorization': f'Bearer {OPENAI_API_KEY}'})
+        response = requests.get(url, headers={'Authorization': f'Bearer {st.secrets["OPENAI_API_KEY"]}'})
         return response.json()
     except Exception as e:
         st.error(f"파일 정보를 가져오는 중 오류 발생: {e}")
