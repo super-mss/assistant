@@ -11,6 +11,8 @@ VECTOR_STORE_ID = "vs_gS5WxC9skamdxq97gKHCZnky"
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 assistant = client.beta.assistants.retrieve(assistant_id=ASSISTANT_ID)
 
+if "file_list" not in st.session_state:
+    st.session_state.file_list = []
 
 with st.sidebar:
      st.markdown("# 백터스토어 등록된 파일")          
@@ -18,14 +20,20 @@ with st.sidebar:
 
      if filelist_btn :         
         all_files = list(client.beta.vector_stores.files.list(VECTOR_STORE_ID))
+        st.session_state.file_list = []
         for file in all_files:    
             url = f'https://api.openai.com/v1/files/{file.id}'
             response = requests.get(url, headers={'Authorization': f'Bearer {st.secrets["OPENAI_API_KEY"]}'})
             file_info = response.json()
-            st.markdown(file_info['filename'])
+            st.session_state.file_list.append(file_info['filename'])
         
         st.subheader(f"",divider="rainbow")
         st.info("파일목록이 생성되었습니다.")
+          
+     if st.session_state.file_list:
+        st.subheader("파일 목록")
+        for filename in st.session_state.file_list:
+            st.markdown(filename)
         
      st.markdown("---")
      uploaded_files = st.file_uploader(        
@@ -46,6 +54,8 @@ with st.sidebar:
                     assistant_id=ASSISTANT_ID,
                     tool_resources={"file_search": {"vector_store_ids": [VECTOR_STORE_ID]}},
                 )
+               st.success("파일 업로드 및 벡터 저장소 업데이트 완료")
+			uploaded_files = None
         except Exception as e:
             st.error(f"처리 중 오류 발생: {e}")
 if "chat_history" not in st.session_state:
