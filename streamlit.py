@@ -54,8 +54,8 @@ with st.sidebar:
                     assistant_id=ASSISTANT_ID,
                     tool_resources={"file_search": {"vector_store_ids": [VECTOR_STORE_ID]}},
                 )
-            	st.success("파일 업로드 및 벡터 저장소 업데이트 완료")
-	    	uploaded_files = None
+                st.success("파일 업로드 및 벡터 저장소 업데이트 완료")
+                uploaded_files = None
         except Exception as e:
             st.error(f"처리 중 오류 발생: {e}")
 if "chat_history" not in st.session_state:
